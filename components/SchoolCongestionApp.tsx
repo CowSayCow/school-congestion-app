@@ -83,18 +83,37 @@ export default function SchoolCongestionApp({ data }: { data: LocationData[] }) 
             <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {data.map((location, index) => {
                 const percentage = Math.round((location.current / location.capacity) * 100)
+                // 画像パスをpublicから取得（例: public/cam01.jpg など）
+                const imageName = encodeURIComponent((location as any).camera_id || "") + ".jpg"
+                const imagePath = `/${imageName}`
+                const [imgExists, setImgExists] = useState<boolean | null>(null)
+
+                useEffect(() => {
+                  if (!(location as any).camera_id) {
+                    setImgExists(false)
+                    return
+                  }
+                  fetch(imagePath, { method: "HEAD" })
+                    .then(res => setImgExists(res.ok))
+                    .catch(() => setImgExists(false))
+                }, [imagePath])
 
                 return (
                   <Card key={index} className="hover:shadow-lg transition-shadow duration-200">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg font-semibold">{location.location_name}</CardTitle>
-                        {getCongestionBadge(location.level)}
+                    <CardHeader className="pb-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <CardTitle className="text-lg font-semibold whitespace-nowrap">{location.location_name}</CardTitle>
+                        <div className="flex items-center">
+                          {imgExists && (
+                            <img
+                              src={imagePath}
+                              alt={location.location_name}
+                              className="rounded object-cover shadow mr-2"
+                              style={{ maxHeight: "96px", width: "auto", maxWidth: "140px" }}
+                            />
+                          )}
+                        </div>
                       </div>
-                      <CardDescription className="flex items-center text-sm text-gray-500">
-                        <Clock className="w-4 h-4 mr-1" />
-                        リアルタイム更新
-                      </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
