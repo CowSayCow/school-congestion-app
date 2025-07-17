@@ -2,18 +2,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { MapPin, Users, Clock, AlertTriangle } from "lucide-react"
-import { ColoredProgress } from "@/components/colored-progress"
+import { MapPin, Users } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-
-interface LocationData {
-  location_name: string
-  current: number
-  capacity: number
-  level: "low" | "medium" | "high"
-}
+import { LocationData, LocationCard } from "./LocationCard"
 
 export default function SchoolCongestionApp({ data }: { data: LocationData[] }) {
   const [selectedTab, setSelectedTab] = useState("congestion")
@@ -23,38 +15,14 @@ export default function SchoolCongestionApp({ data }: { data: LocationData[] }) 
   useEffect(() => {
     const interval = setInterval(() => {
       router.refresh() // サーバーコンポーネントを再フェッチ
+      setLastUpdated(new Date().toLocaleTimeString("ja-JP"))
     }, 60000) // 1分ごと
-    
+
+    // 初回の更新時間セット
     setLastUpdated(new Date().toLocaleTimeString("ja-JP"))
+
     return () => clearInterval(interval)
   }, [router])
-
-  const getCongestionBadge = (level: string) => {
-    switch (level) {
-      case "low":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">空いている</Badge>
-      case "medium":
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">やや混雑</Badge>
-      case "high":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">混雑</Badge>
-      default:
-        return <Badge>不明</Badge>
-    }
- }
-
-  const getCongestionColor = (level: string) => {
-   switch (level) {
-     case "low":
-       return "hsl(210, 100%, 50%)" // 青色
-     case "medium":
-       return "hsl(45, 100%, 50%)" // 黄色
-     case "high":
-       return "hsl(0, 100%, 50%)" // 赤色
-     default:
-       return "hsl(0, 0%, 50%)" // グレー
-   }
- }
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -81,73 +49,9 @@ export default function SchoolCongestionApp({ data }: { data: LocationData[] }) 
           {/* 混雑状況タブ */}
           <TabsContent value="congestion" className="space-y-6">
             <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {data.map((location, index) => {
-                const percentage = Math.round((location.current / location.capacity) * 100)
-                // 画像パスをpublicから取得（例: public/cam01.jpg など）
-                const imageName = encodeURIComponent((location as any).camera_id || "") + ".jpg"
-                const imagePath = `/${imageName}`
-                const [imgExists, setImgExists] = useState<boolean | null>(null)
-
-                useEffect(() => {
-                  if (!(location as any).camera_id) {
-                    setImgExists(false)
-                    return
-                  }
-                  fetch(imagePath, { method: "HEAD" })
-                    .then(res => setImgExists(res.ok))
-                    .catch(() => setImgExists(false))
-                }, [imagePath])
-
-                return (
-                  <Card key={index} className="hover:shadow-lg transition-shadow duration-200">
-                    <CardHeader className="pb-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <CardTitle className="text-lg font-semibold whitespace-nowrap">{location.location_name}</CardTitle>
-                        <div className="flex items-center">
-                          {imgExists && (
-                            <img
-                              src={imagePath}
-                              alt={location.location_name}
-                              className="rounded object-cover shadow mr-2"
-                              style={{ maxHeight: "96px", width: "auto", maxWidth: "140px" }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>現在の利用者数</span>
-                          <span className="font-semibold">
-                            {location.current} / {location.capacity}人
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <ColoredProgress
-                            value={percentage}
-                            level={location.level as "low" | "medium" | "high"}
-                            className="h-3"
-                          />
-                          <style jsx>{`
-                            .progress-bar {
-                              background-color: ${getCongestionColor(location.level)};
-                            }
-                          `}</style>
-                        </div>
-                        <div className="text-right text-sm text-gray-600">{percentage}% 利用中</div>
-                      </div>
-
-                      {location.level === "high" && (
-                        <div className="flex items-center text-red-600 text-sm bg-red-50 p-2 rounded">
-                          <AlertTriangle className="w-4 h-4 mr-2" />
-                          混雑しています
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )
-              })}
+              {data.map((location, index) => (
+                <LocationCard key={index} location={location} />
+              ))}
             </div>
 
             {/* 凡例 */}
