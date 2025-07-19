@@ -16,7 +16,7 @@ export default function SchoolCongestionApp({ data }: { data: LocationData[] }) 
     const interval = setInterval(() => {
       router.refresh() // サーバーコンポーネントを再フェッチ
       setLastUpdated(new Date().toLocaleTimeString("ja-JP"))
-    }, 60000) // 1分ごと
+    }, 1000) // 
 
     // 初回の更新時間セット
     setLastUpdated(new Date().toLocaleTimeString("ja-JP"))
